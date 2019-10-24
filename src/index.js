@@ -89,6 +89,8 @@ const typeDefs = `
   type Mutation {
     createUser(data: CreateUserInput): User!
     deleteUser(userId: ID!): User!
+    deletePost(postId: ID!): Post!
+    deleteComment(userId: ID!, commentId: ID!): Comment!
     createPost(data: CreatePostInput): Post!
     createComment(data: CreateCommentInput): Comment!
   }
@@ -227,6 +229,36 @@ const resolvers = {
       });
 
       return deletedUser[0];
+    },
+    deletePost(parent, args, ctx, info) {
+      const postIndex = posts.findIndex(post => {
+        return post.id === args.postId
+      });
+
+      if(postIndex === -1) {
+        throw new Error("Post not found")
+      }
+
+      const deletedPost = posts.splice(postIndex, 1)
+
+      comments = comments.filter(comment => {
+        return comment.postId !== args.postId
+      });
+
+      return deletedPost[0];
+    },
+    deleteComment(parent, args, ctx, info) {
+      const commentIndex = comments.findIndex(comment => {
+        return comment.id === args.commentId && comment.authorId === args.userId
+      });
+
+      if(commentIndex === -1) {
+        throw new Error("Comment not found")
+      }
+
+      const deletedComment = comments.splice(commentIndex, 1);
+
+      return deletedComment[0];
     },
     createPost(parent, args, ctx, info) {
       const userExists = users.some(user => {
