@@ -2,7 +2,7 @@ import {GraphQLServer} from "graphql-yoga";
 import uuidv4 from "uuid";
 
 //Usuarios de prueba
-const users = [
+let users = [
   {
     id: "1",
     name: "Jesús",
@@ -24,7 +24,7 @@ const users = [
 ]
 
 //Posts de prueba
-const posts = [
+let posts = [
   {
     id: "1",
     title: "Advanced ReactJS",
@@ -49,7 +49,7 @@ const posts = [
 ]
 
 //Comentarios de prueba
-const comments = [
+let comments = [
   {
     id: "14",
     postId: "3",
@@ -88,6 +88,7 @@ const typeDefs = `
 
   type Mutation {
     createUser(data: CreateUserInput): User!
+    deleteUser(userId: ID!): User!
     createPost(data: CreatePostInput): Post!
     createComment(data: CreateCommentInput): Comment!
   }
@@ -195,6 +196,37 @@ const resolvers = {
 
       users.push(user);
       return user
+    },
+    deleteUser(parent, args, ctx, info) {
+      const userIndex = users.findIndex(user => {
+        return user.id === args.userId
+      });
+
+      if(userIndex === -1) {
+        throw new Error("User not found")
+      }
+
+      const deletedUser = users.splice(userIndex, 1);
+
+      //Si el usuario tiene posts creados, eliminarlos junto con los comentarios correspondientes a los posts
+      posts = posts.filter(post => {
+        const match = post.author === args.userId;
+
+        if(match) {
+          comments = comments.filter(comment => {
+            return comment.postId !== post.id
+          })
+        }
+
+        return !match;
+      });
+
+      //Eliminar todos los comentarios asociados al usuario que se va a borrar
+      comments = comments.filter(comment => {
+        return comment.authorId !== args.userId
+      });
+
+      return deletedUser[0];
     },
     createPost(parent, args, ctx, info) {
       const userExists = users.some(user => {
