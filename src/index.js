@@ -87,9 +87,28 @@ const typeDefs = `
   }
 
   type Mutation {
-    createUser(name: String!, email: String!, age: Int): User!
-    createPost(title: String!, body: String!, published: Boolean!, author: ID!): Post!
-    createComment(text: String!, authorId: ID!, postId: ID!): Comment!
+    createUser(data: CreateUserInput): User!
+    createPost(data: CreatePostInput): Post!
+    createComment(data: CreateCommentInput): Comment!
+  }
+
+  input CreateUserInput {
+    name: String!
+    email: String!,
+    age: Int
+  }
+
+  input CreatePostInput {
+    title: String!,
+    body: String!,
+    published: Boolean!,
+    author: ID!
+  }
+
+  input CreateCommentInput {
+    text: String!,
+    authorId: ID!,
+    postId: ID!
   }
 
   type User {
@@ -162,7 +181,7 @@ const resolvers = {
   Mutation: {
     createUser(parent, args, ctx, info) {
       const emailTaken = users.some(user => {
-        return user.email === args.email
+        return user.email === args.data.email
       });
 
       if(emailTaken) {
@@ -171,9 +190,7 @@ const resolvers = {
 
       const user = {
         id: uuidv4(),
-        name: args.name,
-        email: args.email,
-        age: args.age
+        ...args.data
       }
 
       users.push(user);
@@ -181,7 +198,7 @@ const resolvers = {
     },
     createPost(parent, args, ctx, info) {
       const userExists = users.some(user => {
-        return user.id === args.author
+        return user.id === args.data.author
       });
 
       if(!userExists) {
@@ -190,10 +207,7 @@ const resolvers = {
 
       const post = {
         id: uuidv4(),
-        title: args.title,
-        body: args.body,
-        published: args.published,
-        author: args.author
+        ...args.data
       }
 
       posts.push(post);
@@ -201,11 +215,11 @@ const resolvers = {
     },
     createComment(parent, args, ctx, info) {
       const userExists = users.some(user => {
-        return user.id === args.authorId
+        return user.id === args.data.authorId
       });
 
       const postExists = posts.find(post => {
-        return post.id === args.postId
+        return post.id === args.data.postId
       });
 
       if(!userExists) {
@@ -222,9 +236,7 @@ const resolvers = {
 
       const comment = {
         id: uuidv4(),
-        postId: args.postId,
-        authorId: args.authorId,
-        text: args.text
+        ...args.data
       }
 
       comments.push(comment);      
