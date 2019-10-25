@@ -68,17 +68,34 @@ const Mutation = {
       }
       
       user.email = args.data.email;
-
-      if(typeof args.data.name === "string") {
-        user.name = args.data.name
-      }
-
-      if(typeof args.data.age !== "undefined") {
-        user.age = args.data.age
-      }
-
-      return user;
     }
+
+    if(typeof args.data.name === "string") {
+      user.name = args.data.name
+    }
+
+    if(typeof args.data.age !== "undefined") {
+      user.age = args.data.age
+    }
+
+    return user;
+  },
+  createPost(parent, args, ctx, info) {
+    const userExists = ctx.db.users.some(user => {
+      return user.id === args.data.author
+    });
+
+    if(!userExists) {
+      throw new Error("User not found")
+    }
+
+    const post = {
+      id: uuidv4(),
+      ...args.data
+    }
+
+    ctx.db.posts.push(post);
+    return post
   },
   deletePost(parent, args, ctx, info) {
     const postIndex = ctx.db.posts.findIndex(post => {
@@ -97,35 +114,28 @@ const Mutation = {
 
     return deletedPost[0];
   },
-  deleteComment(parent, args, ctx, info) {
-    const commentIndex = ctx.db.comments.findIndex(comment => {
-      return comment.id === args.commentId && comment.authorId === args.userId
+  updatePost(parent, args, ctx, info) {
+    const post = ctx.db.posts.find(post => {
+      return post.id === args.id
     });
 
-    if(commentIndex === -1) {
-      throw new Error("Comment not found")
+    if(!post) {
+      throw new Error("Post not fount")
     }
 
-    const deletedComment = ctx.db.comments.splice(commentIndex, 1);
-
-    return deletedComment[0];
-  },
-  createPost(parent, args, ctx, info) {
-    const userExists = ctx.db.users.some(user => {
-      return user.id === args.data.author
-    });
-
-    if(!userExists) {
-      throw new Error("User not found")
+    if(typeof args.data.title === "string") {
+      post.title = args.data.title
     }
 
-    const post = {
-      id: uuidv4(),
-      ...args.data
+    if(typeof args.data.body === "string") {
+      post.body = args.data.body
+    }
+    
+    if(typeof args.data.published === "boolean") {
+      post.published = args.data.published
     }
 
-    ctx.db.posts.push(post);
-    return post
+    return post;
   },
   createComment(parent, args, ctx, info) {
     const userExists = ctx.db.users.some(user => {
@@ -155,6 +165,19 @@ const Mutation = {
 
     ctx.db.comments.push(comment);      
     return comment
+  },
+  deleteComment(parent, args, ctx, info) {
+    const commentIndex = ctx.db.comments.findIndex(comment => {
+      return comment.id === args.commentId && comment.authorId === args.userId
+    });
+
+    if(commentIndex === -1) {
+      throw new Error("Comment not found")
+    }
+
+    const deletedComment = ctx.db.comments.splice(commentIndex, 1);
+
+    return deletedComment[0];
   }
 }
 
