@@ -163,7 +163,8 @@ const Mutation = {
       ...args.data
     }
 
-    ctx.db.comments.push(comment);      
+    ctx.db.comments.push(comment);
+    ctx.pubsub.publish(`comment ${args.data.postId}`, {comment: comment})  
     return comment
   },
   updateComment(parent, args, ctx, info) {
