@@ -95,6 +95,9 @@ const Mutation = {
     }
 
     ctx.db.posts.push(post);
+    if(args.data.published) {
+      ctx.pubsub.publish("post", {post: post})
+    }
     return post
   },
   deletePost(parent, args, ctx, info) {
