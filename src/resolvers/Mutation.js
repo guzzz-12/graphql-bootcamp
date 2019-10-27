@@ -219,6 +219,10 @@ const Mutation = {
       return comment.id === args.id
     });
 
+    const commentIndex = ctx.db.comments.findIndex(comment => {
+      return comment.id === args.id
+    })
+
     if(!comment) {
       throw new Error("Comment not found")
     }
@@ -226,6 +230,15 @@ const Mutation = {
     if(typeof args.data.text === "string") {
       comment.text = args.data.text
     }
+
+    ctx.db.comments.splice(commentIndex, 1, comment);
+
+    ctx.pubsub.publish(`comment ${comment.postId}`, {
+      comment: {
+        mutation: "UPDATED",
+        data: comment
+      }
+    })
 
     return comment;
   },
