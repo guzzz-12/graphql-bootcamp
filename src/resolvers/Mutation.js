@@ -120,12 +120,22 @@ const Mutation = {
       return comment.postId !== args.postId
     });
 
+    if(deletedPost[0].published) {
+      ctx.pubsub.publish("post", {
+        post: {
+          mutation: "DELETED",
+          data: deletedPost[0]
+        }
+      })
+    }
+
     return deletedPost[0];
   },
   updatePost(parent, args, ctx, info) {
     const post = ctx.db.posts.find(post => {
       return post.id === args.id
     });
+    const originalPost = {...post}
 
     if(!post) {
       throw new Error("Post not fount")
@@ -141,6 +151,28 @@ const Mutation = {
     
     if(typeof args.data.published === "boolean") {
       post.published = args.data.published
+      if(originalPost.published && !post.published) {
+        ctx.pubsub.publish("post", {
+          post: {
+            mutation: "DELETED",
+            data: originalPost
+          }
+        })
+      } else if(!originalPost.published && post.published) {
+        ctx.pubsub.publish("post", {
+          post: {
+            mutation: "CREATED",
+            data: post
+          }
+        })
+      }
+    } else if(post.published) {
+      ctx.pubsub.publish("post", {
+        post: {
+          mutation: "UPDATED",
+          data: post
+        }
+      })
     }
 
     return post;
