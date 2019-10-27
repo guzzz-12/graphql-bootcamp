@@ -96,7 +96,12 @@ const Mutation = {
 
     ctx.db.posts.push(post);
     if(args.data.published) {
-      ctx.pubsub.publish("post", {post: post})
+      ctx.pubsub.publish("post", {
+        post: {
+          mutation: "CREATED",
+          data: post
+        }
+      })
     }
     return post
   },
