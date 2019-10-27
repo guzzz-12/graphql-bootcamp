@@ -204,7 +204,14 @@ const Mutation = {
     }
 
     ctx.db.comments.push(comment);
-    ctx.pubsub.publish(`comment ${args.data.postId}`, {comment: comment})  
+
+    ctx.pubsub.publish(`comment ${args.data.postId}`, {
+      comment: {
+        mutation: "CREATED",
+        data: comment
+      }
+    });
+
     return comment
   },
   updateComment(parent, args, ctx, info) {
@@ -232,6 +239,13 @@ const Mutation = {
     }
 
     const deletedComment = ctx.db.comments.splice(commentIndex, 1);
+
+    ctx.pubsub.publish(`comment ${deletedComment[0].postId}`, {
+      comment: {
+        mutation: "DELETED",
+        data: deletedComment[0]
+      }
+    })
 
     return deletedComment[0];
   }
